@@ -8,8 +8,8 @@ const fs = require('fs');
 
   await page.goto(`https://oces.myesched.com/schedule/logon.asp?sn=oces.emseschedule.com`);
 
-  await page.type('[name=user_id]', 'Roconnor');
-  await page.type('[name=password]', 'Q!q1111');
+  await page.type('[name=user_id]', '');
+  await page.type('[name=password]', '');
 
   await page.click('[name=Submit4]');
   await page.goto(`https://oces.myesched.com/schedule/rptprintmyschedule.asp`);
