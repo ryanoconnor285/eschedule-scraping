@@ -1,5 +1,4 @@
 const puppeteer = require('puppeteer');
-const cheerio = require('cheerio');
 const fs = require('fs');
 
 (async () => {
@@ -52,6 +51,9 @@ const fs = require('fs');
   })
   
   await browser.close();
+
+  const jsonString = JSON.stringify(data.body)
+  fs.writeFileSync('./scheduleList.json', jsonString)
 
   console.table(data.body);
 
