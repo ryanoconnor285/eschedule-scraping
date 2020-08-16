@@ -1,4 +1,6 @@
+require('dotenv').config()
 const puppeteer = require('puppeteer');
+const moment = require('moment');
 const fs = require('fs');
 
 (async () => {
@@ -7,8 +9,8 @@ const fs = require('fs');
 
   await page.goto(`https://oces.myesched.com/schedule/logon.asp?sn=oces.emseschedule.com`);
 
-  await page.type('[name=user_id]', '');
-  await page.type('[name=password]', '');
+  await page.type('[name=user_id]', process.env.USERNAME);
+  await page.type('[name=password]', process.env.PASSWORD);
 
   await page.click('[name=Submit4]');
   await page.goto(`https://oces.myesched.com/schedule/rptprintmyschedule.asp`);
@@ -25,37 +27,42 @@ const fs = require('fs');
     visible: true
   });
 
-  await page.screenshot({path: '3.png'});
-
   const data = await page.evaluate(() => {
     const tds = document.querySelectorAll('td');
 
     const titles = Array.from(tds).map(td => td.innerText);
-    const tableData = {
-      headers: [],
-      body: []
-    }
-    const headers = document.querySelectorAll('#main_table > thead > tr > th');
-    Array.from(headers).map(header => tableData.headers.push(header.innerText))
+
+    const tableData = []
+
+    // const headers = document.querySelectorAll('#main_table > thead > tr > th');
+    // Array.from(headers).map(header => tableData.headers.push(header.innerText))
 
     const rows = document.querySelectorAll('#main_table > tbody > tr');
     Array.from(rows).map(row => {
       const rowData = row.innerText.split(`\t`)
+      const times = rowData[1].split('-')
+      const start = times[0].trim()
+      const end = times[1].trim()
       const obj = {}
-      obj.date = rowData[0]
-      obj.unit = rowData[4]
-      obj.duration = rowData[1]
-      tableData.body.push(obj)
+      obj.startDate = rowData[0]
+      obj.endDate = ""
+      obj.title = rowData[4].trim()
+      obj.start = start
+      obj.end = end
+      obj.position = rowData[3].trim()
+      tableData.push(obj)
     })
     return tableData;
   })
   
   await browser.close();
 
-  const jsonString = JSON.stringify(data.body)
+  data.map(obj => obj.start === obj.end ? obj.endDate = moment(obj.startDate).add(1, 'd').format('MM/DD/YYYY') : obj.endDate = obj.startDate)
+
+  const jsonString = JSON.stringify(data)
   fs.writeFileSync('./scheduleList.json', jsonString)
 
-  console.table(data.body);
+  console.table(data);
 
   return data;
 })()
